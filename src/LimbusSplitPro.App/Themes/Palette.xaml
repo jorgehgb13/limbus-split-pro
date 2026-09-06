@@ -1,0 +1,33 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Identidad de marca: verde-teal profundo + coral, la misma pareja de
+         color de la portada del documento original. Ni gris genérico ni
+         infantil: un verde con carácter y un acento cálido. -->
+    <Color x:Key="BrandTealDarkest">#0F241F</Color>
+    <Color x:Key="BrandTealDark">#173F37</Color>
+    <Color x:Key="BrandTeal">#1F5C50</Color>
+    <Color x:Key="BrandTealLight">#2E8873</Color>
+    <Color x:Key="BrandTealPale">#DCEFE9</Color>
+
+    <Color x:Key="BrandCoral">#F0575B</Color>
+    <Color x:Key="BrandCoralHover">#D94549</Color>
+    <Color x:Key="BrandCoralPale">#FBE3E4</Color>
+
+    <Color x:Key="NeutralWhite">#FFFFFF</Color>
+    <Color x:Key="NeutralOffWhite">#FAFAF8</Color>
+    <Color x:Key="NeutralBorderLight">#E2E2DE</Color>
+    <Color x:Key="NeutralTextPrimaryLight">#1A1A18</Color>
+    <Color x:Key="NeutralTextSecondaryLight">#6B6B66</Color>
+
+    <Color x:Key="NeutralBackgroundDark">#10201C</Color>
+    <Color x:Key="NeutralSurfaceDark">#1A302B</Color>
+    <Color x:Key="NeutralBorderDark">#2E453F</Color>
+    <Color x:Key="NeutralTextPrimaryDark">#F2F2EF</Color>
+    <Color x:Key="NeutralTextSecondaryDark">#A9B3AF</Color>
+
+    <Color x:Key="SemanticError">#D94549</Color>
+    <Color x:Key="SemanticWarning">#E0A62E</Color>
+    <Color x:Key="SemanticSuccess">#2E8873</Color>
+
+</ResourceDictionary>

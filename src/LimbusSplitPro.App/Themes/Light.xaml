@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource NeutralOffWhite}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource NeutralWhite}" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource BrandTealPale}" />
+    <SolidColorBrush x:Key="BorderBrush2" Color="{StaticResource NeutralBorderLight}" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource NeutralTextPrimaryLight}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource NeutralTextSecondaryLight}" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource BrandTeal}" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource BrandTealDark}" />
+    <SolidColorBrush x:Key="AccentContrastBrush" Color="{StaticResource NeutralWhite}" />
+
+    <SolidColorBrush x:Key="HighlightBrush" Color="{StaticResource BrandCoral}" />
+    <SolidColorBrush x:Key="HighlightHoverBrush" Color="{StaticResource BrandCoralHover}" />
+
+    <SolidColorBrush x:Key="TitleBarBrush" Color="{StaticResource BrandTealDarkest}" />
+    <SolidColorBrush x:Key="TitleBarTextBrush" Color="{StaticResource NeutralWhite}" />
+
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource SemanticError}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource SemanticWarning}" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SemanticSuccess}" />
+
+    <!-- Contraste alto: variante usada cuando el usuario activa alto
+         contraste en Windows (ver MainWindow.xaml.cs, detección de
+         SystemParameters.HighContrast). -->
+    <SolidColorBrush x:Key="FocusVisibleBrush" Color="{StaticResource BrandCoral}" />
+
+</ResourceDictionary>

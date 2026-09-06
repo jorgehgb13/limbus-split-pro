@@ -1,0 +1,95 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <!--
+    Sección 19/20 del prompt original:
+      - Instalación por usuario (LocalAppData), SIN requerir privilegios de
+        administrador, para poder procesar audio sin elevación.
+      - Registro de desinstalación limpia.
+      - No sobrescribe documentos del usuario; solo instala el binario y
+        el runtime embebido.
+    UpgradeCode es fijo para siempre (no cambiar entre versiones): permite
+    que MajorUpgrade detecte instalaciones previas correctamente.
+  -->
+  <Package Name="Limbus Split Pro"
+           Manufacturer="Limbus Split Pro"
+           Version="1.0.0.0"
+           UpgradeCode="8F2B6C1A-4D3E-4A6F-9C2D-1E7A5B6C9D01"
+           Scope="perUser">
+
+    <MajorUpgrade
+      DowngradeErrorMessage="Ya hay instalada una versión más reciente de Limbus Split Pro."
+      Schedule="afterInstallInitialize" />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="INSTALLFOLDER_PARENT" Name="Programs">
+        <Directory Id="APPFOLDER" Name="Limbus Split Pro" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppProgramMenuFolder" Name="Limbus Split Pro" />
+    </StandardDirectory>
+
+    <!--
+      Harvesting automático de todo lo publicado por `dotnet publish`
+      (la app WPF, sus DLLs, y engine/python + engine/limbus_engine
+      copiados como "content" del proyecto App — ver
+      LimbusSplitPro.App.csproj, ItemGroup de Content, y el paso
+      "Stage embedded engine" del workflow de CI). Con miles de archivos
+      dentro del runtime de Python embebido, listar cada uno a mano no es
+      práctico ni mantenible; WiX v4/v5 soporta glob de archivos para
+      exactamente este caso.
+    -->
+    <Fragment>
+      <ComponentGroup Id="ProductComponents" Directory="APPFOLDER">
+        <Files Include="$(PublishDir)\**" />
+      </ComponentGroup>
+    </Fragment>
+
+    <Fragment>
+      <ComponentGroup Id="ShortcutComponents" Directory="AppProgramMenuFolder">
+        <Component Id="ApplicationShortcut" Guid="2B7B0B7B-6B0E-4E7B-9B3F-000000000001">
+          <Shortcut Id="StartMenuShortcut"
+                    Name="Limbus Split Pro"
+                    Description="Separar canciones en pistas, en tu propio equipo"
+                    Target="[APPFOLDER]LimbusSplitPro.exe"
+                    WorkingDirectory="APPFOLDER" />
+          <Shortcut Id="UninstallShortcut"
+                    Name="Desinstalar Limbus Split Pro"
+                    Target="[SystemFolder]msiexec.exe"
+                    Arguments="/x [ProductCode]" />
+          <RemoveFolder Id="RemoveAppProgramMenuFolder" On="uninstall" />
+          <!-- Clave de registro por-usuario: marca de presencia para que
+               MSI sepa que este componente está instalado sin requerir
+               permisos de administrador (regla dura de instalación
+               per-user). -->
+          <RegistryValue Root="HKCU"
+                          Key="Software\Limbus Split Pro"
+                          Name="Installed"
+                          Type="integer"
+                          Value="1"
+                          KeyPath="yes" />
+        </Component>
+      </ComponentGroup>
+    </Fragment>
+
+    <Feature Id="MainFeature" Title="Limbus Split Pro" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentGroupRef Id="ShortcutComponents" />
+    </Feature>
+
+    <!--
+      UI mínima con licencia (sección 20: "Mostrar editor, versión y
+      destino"). WixUI_Minimal se eligió sobre WixUI_InstallDir porque la
+      instalación per-user va siempre a la misma ruta controlada — no se le
+      pide al usuario elegir carpeta (evita el riesgo de que elija escribir
+      dentro de Program Files por error).
+    -->
+    <ui:WixUI Id="WixUI_Minimal" />
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+
+  </Package>
+</Wix>

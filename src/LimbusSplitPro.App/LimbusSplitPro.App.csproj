@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <RootNamespace>LimbusSplitPro.App</RootNamespace>
+    <AssemblyName>LimbusSplitPro</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Accesibilidad: nombres de automatización y navegación por teclado
+         se definen en XAML (AutomationProperties.Name), no aquí. -->
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Product>Limbus Split Pro</Product>
+    <Company>Limbus Split Pro</Company>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LimbusSplitPro.Core\LimbusSplitPro.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,27 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource NeutralBackgroundDark}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource NeutralSurfaceDark}" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource BrandTealDark}" />
+    <SolidColorBrush x:Key="BorderBrush2" Color="{StaticResource NeutralBorderDark}" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource NeutralTextPrimaryDark}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource NeutralTextSecondaryDark}" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource BrandTealLight}" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource BrandTeal}" />
+    <SolidColorBrush x:Key="AccentContrastBrush" Color="{StaticResource NeutralWhite}" />
+
+    <SolidColorBrush x:Key="HighlightBrush" Color="{StaticResource BrandCoral}" />
+    <SolidColorBrush x:Key="HighlightHoverBrush" Color="{StaticResource BrandCoralHover}" />
+
+    <SolidColorBrush x:Key="TitleBarBrush" Color="{StaticResource BrandTealDarkest}" />
+    <SolidColorBrush x:Key="TitleBarTextBrush" Color="{StaticResource NeutralWhite}" />
+
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource SemanticError}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource SemanticWarning}" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SemanticSuccess}" />
+
+    <SolidColorBrush x:Key="FocusVisibleBrush" Color="{StaticResource BrandCoral}" />
+
+</ResourceDictionary>

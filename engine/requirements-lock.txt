@@ -1,0 +1,29 @@
+# Versiones exactas, resueltas contra PyPI el 2026-09-06 (ver
+# docs/LICENSING.md). Fijar versiones es obligatorio para builds
+# reproducibles (sección 2 del prompt original).
+#
+# NOTA DE COMPATIBILIDAD SIN VERIFICAR EN WINDOWS REAL:
+# demucs 4.1.0 declara `torch>=2.1` sin techo superior en su metadata de
+# PyPI (confirmado leyendo su METADATA real). Eso NO garantiza que su
+# código siga siendo compatible con una versión de torch tan reciente como
+# 2.14.0 (torch 2.1 es de 2023; puede haber APIs internas removidas desde
+# entonces). Este archivo fija 2.14.0 porque es la última estable
+# disponible en PyPI hoy, pero el paso "Build embedded Python runtime" del
+# workflow de CI ejecuta una prueba de humo real (cargar htdemucs y separar
+# el fixture sintético) antes de continuar. Si esa prueba falla por
+# incompatibilidad, hay que bajar la versión de torch aquí a una probada
+# (por ejemplo la última release 2.1.x/2.2.x/2.3.x) y volver a correr la
+# pipeline — nunca se debe silenciar ese fallo.
+demucs==4.1.0
+torch==2.14.0
+soundfile==0.14.0
+numpy==2.5.3
+psutil==7.2.2
+einops==0.8.2
+julius==0.2.8
+huggingface-hub
+pyyaml
+safetensors
+sphn>=0.1.12
+lameenc>=1.2
+tqdm

@@ -1,0 +1,9 @@
+# Dependencias de alto nivel del motor. Para el build reproducible real se
+# usa requirements-lock.txt (versiones exactas), generado/validado contra
+# PyPI el 2026-09-06 — ver ese archivo para las versiones fijadas y para
+# la nota de compatibilidad torch/demucs que debe confirmar la CI.
+demucs
+torch
+soundfile
+numpy
+psutil

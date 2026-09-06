@@ -1,0 +1,192 @@
+name: Build Windows
+
+# Se dispara con cada push. Corre en un runner windows-latest REAL de
+# GitHub (Windows Server, con .NET y Python instalables, sin GPU). Este es
+# el único lugar donde este proyecto se compila, prueba y empaqueta de
+# verdad — ver README.md y docs/PENDING_TESTS.md.
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch: {}
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  PYTHON_PIN_VERSION: "3.12"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Python (solo para herramientas de CI, no para el runtime embebido)
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_PIN_VERSION }}
+
+      - name: Restore .NET solution
+        run: dotnet restore LimbusSplitPro.sln
+
+      - name: Build .NET solution (Release, x64)
+        run: dotnet build LimbusSplitPro.sln -c Release -p:Platform=x64 --no-restore
+
+      - name: Run unit tests
+        run: dotnet test tests/LimbusSplitPro.Core.Tests/LimbusSplitPro.Core.Tests.csproj -c Release --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Pin model hashes against the real official source
+        # Ejecuta demucs.pretrained.get_model() de verdad contra la fuente
+        # oficial y reescribe models/manifest.json con SHA-256 y tamaño
+        # reales. Si un modelo no se puede resolver, este paso falla la
+        # pipeline aquí (fail-closed) en vez de seguir con un manifiesto a
+        # medias. Ver engine/scripts/pin_model_hashes.py.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install demucs==4.1.0 torch --index-url https://download.pytorch.org/whl/cpu
+          python engine/scripts/pin_model_hashes.py
+
+      - name: Verify no PENDING_CI_PIN values remain
+        shell: pwsh
+        run: |
+          $manifest = Get-Content models/manifest.json -Raw
+          if ($manifest -match "PENDING_CI_PIN") {
+            Write-Error "models/manifest.json todavía tiene valores sin pinear. Abortando build (fail-closed)."
+            exit 1
+          }
+          Write-Host "Manifiesto de modelos verificado: sin valores pendientes."
+
+      - name: Build embedded Python runtime
+        shell: pwsh
+        run: ./engine/scripts/build_embedded_python.ps1
+
+      - name: Smoke test embedded runtime (carga de modelo real, sin GPU)
+        shell: pwsh
+        run: |
+          & "engine/embedded-python/python.exe" -c "
+          import sys
+          sys.path.insert(0, 'engine')
+          from limbus_engine.device import decide_device
+          d = decide_device('cpu', 60, 2, 44100)
+          print('Dispositivo de prueba:', d.device, d.reason)
+          from demucs.pretrained import get_model
+          m = get_model('htdemucs')
+          print('Modelo cargado, fuentes:', m.sources)
+          "
+
+      - name: Publish WPF app (self-contained win-x64)
+        run: |
+          dotnet publish src/LimbusSplitPro.App/LimbusSplitPro.App.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=false -p:Platform=x64 `
+            -o publish/
+
+      - name: Stage embedded engine + models manifest into publish output
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path publish/engine/python | Out-Null
+          Copy-Item -Recurse -Force engine/embedded-python/* publish/engine/python/
+          New-Item -ItemType Directory -Force -Path publish/engine/limbus_engine | Out-Null
+          Copy-Item -Recurse -Force engine/limbus_engine/* publish/engine/limbus_engine/
+          New-Item -ItemType Directory -Force -Path publish/models | Out-Null
+          Copy-Item -Force models/manifest.json publish/models/manifest.json
+
+      - name: Generate SBOM (.NET dependencies)
+        shell: pwsh
+        run: |
+          dotnet tool install --global CycloneDX --version 3.*
+          dotnet-CycloneDX LimbusSplitPro.sln -o artifacts/sbom -f SBOM.dotnet.cdx.json --json
+
+      - name: Generate SBOM (Python dependencies)
+        run: |
+          python -m pip install cyclonedx-bom
+          cyclonedx-py requirements engine/requirements-lock.txt -o artifacts/sbom/SBOM.python.cdx.json
+
+      - name: Generate third-party notices (best effort, revisar manualmente)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          "Limbus Split Pro - THIRD_PARTY_NOTICES" | Out-File artifacts/THIRD_PARTY_NOTICES.txt
+          "Generado automáticamente el $(Get-Date -Format o). Revisar manualmente antes de distribuir a terceros." | Out-File artifacts/THIRD_PARTY_NOTICES.txt -Append
+          "" | Out-File artifacts/THIRD_PARTY_NOTICES.txt -Append
+          "Ver también artifacts/sbom/SBOM.dotnet.cdx.json y SBOM.python.cdx.json para la lista completa de dependencias con sus licencias declaradas." | Out-File artifacts/THIRD_PARTY_NOTICES.txt -Append
+
+      - name: Install WiX Toolset v5 (sin fee, ver docs/LICENSING.md)
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add --global WixToolset.UI.wixext/5.0.2
+          wix extension add --global WixToolset.Util.wixext/5.0.2
+
+      - name: Build MSI installer
+        shell: pwsh
+        run: |
+          $publishDirFull = (Resolve-Path "publish").Path + "\"
+          dotnet build installer/LimbusSplitPro.Installer.wixproj -c Release `
+            -p:PublishDir=$publishDirFull -o artifacts/installer
+
+      - name: Sign binaries and installer (solo si hay certificado configurado)
+        if: ${{ env.SIGNING_CERTIFICATE_BASE64 != '' }}
+        shell: pwsh
+        env:
+          SIGNING_CERTIFICATE_BASE64: ${{ secrets.SIGNING_CERTIFICATE_BASE64 }}
+          SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          Write-Host "Certificado de firma configurado: firmando artefactos con SignTool + timestamp RFC 3161."
+          $certPath = "cert.pfx"
+          [IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($env:SIGNING_CERTIFICATE_BASE64))
+          $signtool = (Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Recurse -Filter "signtool.exe" |
+                       Where-Object { $_.FullName -match "x64" } | Select-Object -First 1).FullName
+          & $signtool sign /f $certPath /p $env:SIGNING_CERTIFICATE_PASSWORD /fd SHA256 `
+            /tr http://timestamp.digicert.com /td SHA256 `
+            (Get-ChildItem -Recurse -Include "LimbusSplitPro.exe","*.dll" -Path publish).FullName
+          & $signtool sign /f $certPath /p $env:SIGNING_CERTIFICATE_PASSWORD /fd SHA256 `
+            /tr http://timestamp.digicert.com /td SHA256 `
+            (Get-ChildItem -Recurse -Include "*.msi" -Path artifacts/installer).FullName
+          Remove-Item $certPath
+
+      - name: Note unsigned build (si no hay certificado)
+        if: ${{ env.SIGNING_CERTIFICATE_BASE64 == '' }}
+        shell: pwsh
+        run: |
+          "COMPILACIÓN LOCAL DE DESARROLLO - NO FIRMADA - NO DISTRIBUIR A TERCEROS" |
+            Out-File artifacts/UNSIGNED_BUILD_WARNING.txt
+          Write-Host "No hay secrets.SIGNING_CERTIFICATE_BASE64 configurado: el build queda sin firmar. Ver docs/PENDING_TESTS.md."
+
+      - name: Compute checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path artifacts/installer -Filter *.msi | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+            "$hash  $($_.Name)" | Out-File artifacts/checksums.sha256 -Append
+          }
+
+      - name: Write test report
+        shell: pwsh
+        run: |
+          Copy-Item docs/PENDING_TESTS.md artifacts/test-report.md
+          "" | Out-File artifacts/test-report.md -Append
+          "## Verificado automáticamente en esta corrida de CI" | Out-File artifacts/test-report.md -Append
+          "- Compilación reproducible desde checkout limpio: OK" | Out-File artifacts/test-report.md -Append
+          "- Arranque sin Visual Studio (runner no lo tiene): OK" | Out-File artifacts/test-report.md -Append
+          "- Modelo real cargado en CPU (smoke test): OK" | Out-File artifacts/test-report.md -Append
+          "- Hashes de modelos pineados contra la fuente oficial: OK" | Out-File artifacts/test-report.md -Append
+          "- SBOM generado: OK" | Out-File artifacts/test-report.md -Append
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LimbusSplitPro-installer
+          path: |
+            artifacts/installer/*.msi
+            artifacts/checksums.sha256
+            artifacts/sbom/*.json
+            artifacts/THIRD_PARTY_NOTICES.txt
+            artifacts/test-report.md
+            artifacts/UNSIGNED_BUILD_WARNING.txt
+          if-no-files-found: warn

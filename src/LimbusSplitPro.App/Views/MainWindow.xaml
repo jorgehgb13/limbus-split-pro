@@ -1,0 +1,235 @@
+<Window x:Class="LimbusSplitPro.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:LimbusSplitPro.App.ViewModels"
+        xmlns:conv="clr-namespace:LimbusSplitPro.App.Converters"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="Limbus Split Pro"
+        Height="720" MinHeight="560"
+        Width="1120" MinWidth="860"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        WindowStyle="None"
+        ResizeMode="CanResizeWithGrip"
+        PreviewKeyDown="Window_PreviewKeyDown">
+
+    <Window.Resources>
+        <conv:SecondsToTimeStringConverter x:Key="SecondsToTime" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="36" ResizeBorderThickness="6"
+                             GlassFrameThickness="0" CornerRadius="0" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Border BorderBrush="{DynamicResource BorderBrush2}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="36" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Barra de título personalizada: logo/título a la izquierda,
+                 controles a la derecha, nunca solapados (sección 3). -->
+            <Grid Grid.Row="0" Background="{DynamicResource TitleBarBrush}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="False">
+                    <Ellipse Width="14" Height="14" Fill="{DynamicResource HighlightBrush}" Margin="0,0,8,0" />
+                    <TextBlock Text="Limbus Split Pro" Foreground="{DynamicResource TitleBarTextBrush}"
+                               FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Style="{StaticResource TitleBarButton}" Click="MinimizeButton_Click"
+                            AutomationProperties.Name="Minimizar">
+                        <Path Data="M0,0 L10,0" Stroke="{DynamicResource TitleBarTextBrush}" StrokeThickness="1" />
+                    </Button>
+                    <Button Style="{StaticResource TitleBarButton}" Click="MaximizeRestoreButton_Click"
+                            AutomationProperties.Name="Maximizar o restaurar">
+                        <Path Data="M0,0 L10,0 L10,10 L0,10 Z" Stroke="{DynamicResource TitleBarTextBrush}" StrokeThickness="1" />
+                    </Button>
+                    <Button Style="{StaticResource CloseTitleBarButton}" Click="CloseButton_Click"
+                            AutomationProperties.Name="Cerrar">
+                        <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="{DynamicResource TitleBarTextBrush}" StrokeThickness="1" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Contenido: panel izquierdo (entrada/plan) + panel derecho (resultado/mezclador) -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="340" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- PANEL IZQUIERDO -->
+                <ScrollViewer Grid.Column="0" Background="{DynamicResource SurfaceBrush}" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="1. Archivo de entrada" Style="{StaticResource HeadingText}" FontSize="14" Margin="0,0,0,8" />
+                        <Button Content="Elegir canción…" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding PickFileCommand}" HorizontalAlignment="Stretch"
+                                AutomationProperties.Name="Elegir archivo de canción" />
+                        <TextBlock Text="{Binding InputFileSummary}" Style="{StaticResource CaptionText}"
+                                   TextWrapping="Wrap" Margin="0,6,0,20" />
+
+                        <TextBlock Text="2. Qué extraer" Style="{StaticResource HeadingText}" FontSize="14" Margin="0,0,0,4" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Button Content="Todas" Style="{StaticResource SecondaryButton}" Padding="10,4"
+                                    Command="{Binding SelectAllCommand}" Margin="0,0,6,0"
+                                    AutomationProperties.Name="Seleccionar todas las categorías disponibles" />
+                            <Button Content="Ninguna" Style="{StaticResource SecondaryButton}" Padding="10,4"
+                                    Command="{Binding SelectNoneCommand}"
+                                    AutomationProperties.Name="Deseleccionar todas las categorías" />
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding Categories}" Margin="0,0,0,20">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Style="{StaticResource StemCategoryToggle}"
+                                              IsChecked="{Binding IsSelected}"
+                                              IsEnabled="{Binding IsAvailable}"
+                                              ToolTip="{Binding Tooltip}"
+                                              AutomationProperties.Name="{Binding DisplayName}"
+                                              AutomationProperties.HelpText="{Binding Tooltip}">
+                                        <TextBlock Text="{Binding DisplayName}" />
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="3. Carpeta de trabajo" Style="{StaticResource HeadingText}" FontSize="14" Margin="0,0,0,8" />
+                        <Button Content="Elegir carpeta…" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding PickFolderCommand}" HorizontalAlignment="Stretch"
+                                AutomationProperties.Name="Elegir carpeta de trabajo y exportación" />
+                        <TextBlock Text="{Binding OutputFolderPath}" Style="{StaticResource CaptionText}"
+                                   TextWrapping="Wrap" Margin="0,6,0,20" />
+
+                        <TextBlock Text="4. Dispositivo" Style="{StaticResource HeadingText}" FontSize="14" Margin="0,0,0,8" />
+                        <ComboBox SelectedValue="{Binding DevicePreference}" SelectedValuePath="Tag"
+                                  AutomationProperties.Name="Preferencia de dispositivo de procesamiento"
+                                  Margin="0,0,0,20">
+                            <ComboBoxItem Content="Automático" Tag="auto" IsSelected="True" />
+                            <ComboBoxItem Content="Solo CPU" Tag="cpu" />
+                            <ComboBoxItem Content="GPU si está disponible" Tag="gpu" />
+                        </ComboBox>
+
+                        <Button Content="5. Separar y exportar" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding StartSeparationCommand}" HorizontalAlignment="Stretch"
+                                FontSize="14" Padding="16,14"
+                                AutomationProperties.Name="Iniciar separación y exportación" />
+                        <Button Content="Cancelar" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding CancelSeparationCommand}" HorizontalAlignment="Stretch"
+                                Margin="0,8,0,0"
+                                Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- PANEL DERECHO -->
+                <Grid Grid.Column="1" Margin="24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Estado del proceso -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                        <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource HeadingText}" />
+                        <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}" Minimum="0" Maximum="100"
+                                     Margin="0,8,0,0"
+                                     Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVis}}"
+                                     AutomationProperties.Name="Progreso de separación" />
+                    </StackPanel>
+
+                    <!-- Reproductor general -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8"
+                                Visibility="{Binding HasResults, Converter={StaticResource BoolToVis}}">
+                        <Button Content="▶" Style="{StaticResource SecondaryButton}" Width="44"
+                                Command="{Binding PlayCommand}" AutomationProperties.Name="Reproducir" />
+                        <Button Content="⏸" Style="{StaticResource SecondaryButton}" Width="44" Margin="6,0,0,0"
+                                Command="{Binding PauseCommand}" AutomationProperties.Name="Pausar" />
+                        <Button Content="⏹" Style="{StaticResource SecondaryButton}" Width="44" Margin="6,0,0,0"
+                                Command="{Binding StopCommand}" AutomationProperties.Name="Detener" />
+                    </StackPanel>
+
+                    <!-- Barra temporal -->
+                    <Grid Grid.Row="2" Margin="0,0,0,16"
+                          Visibility="{Binding HasResults, Converter={StaticResource BoolToVis}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding TimelinePositionSecondsReadOnly, Converter={StaticResource SecondsToTime}}"
+                                   VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <Slider Grid.Column="1" Minimum="0" Maximum="{Binding TimelineTotalSeconds}"
+                                Value="{Binding TimelinePositionSeconds}"
+                                IsMoveToPointEnabled="True"
+                                AutomationProperties.Name="Barra de tiempo, clic y arrastre para buscar" />
+                        <TextBlock Grid.Column="2" Text="{Binding TimelineTotalSeconds, Converter={StaticResource SecondsToTime}}"
+                                   VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </Grid>
+
+                    <!-- Lista de pistas / mezclador -->
+                    <ScrollViewer Grid.Row="3">
+                        <ItemsControl ItemsSource="{Binding Tracks}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="10"
+                                            Padding="14,10" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="140" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="44" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                                            <ToggleButton Grid.Column="1" Style="{StaticResource MuteChip}"
+                                                          IsChecked="{Binding IsMuted}" Margin="0,0,6,0"
+                                                          AutomationProperties.Name="{Binding Name, StringFormat='Silenciar {0}'}" />
+                                            <ToggleButton Grid.Column="2" Style="{StaticResource SoloChip}"
+                                                          IsChecked="{Binding IsSolo}" Margin="0,0,10,0"
+                                                          AutomationProperties.Name="{Binding Name, StringFormat='Solo {0}'}" />
+                                            <Slider Grid.Column="3" Minimum="0" Maximum="150"
+                                                    Value="{Binding VolumePercent}" VerticalAlignment="Center"
+                                                    AutomationProperties.Name="{Binding Name, StringFormat='Volumen de {0}'}" />
+                                            <TextBlock Grid.Column="4" Text="{Binding VolumePercent, StringFormat={}{0:F0}%}"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Right"
+                                                       Style="{StaticResource CaptionText}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Exportar mezcla / Abrir carpeta -->
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,16,0,0"
+                                Visibility="{Binding HasResults, Converter={StaticResource BoolToVis}}">
+                        <Button Content="Exportar mezcla" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding ExportMixCommand}" Margin="0,0,10,0" />
+                        <Button Content="Abrir carpeta" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding OpenOutputFolderCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

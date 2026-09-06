@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Limbus Split Pro - Model Manifest",
+  "description": "Cada modelo listado aquí debe tener procedencia, hash y estado de licencia documentados ANTES de poder usarse. Ver docs/MODELS.md.",
+  "type": "object",
+  "required": ["schema_version", "models"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "models": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/model" }
+    }
+  },
+  "definitions": {
+    "model": {
+      "type": "object",
+      "required": [
+        "id", "display_name", "sources", "version", "origin_url",
+        "download_url", "relative_path", "sha256", "expected_size_bytes",
+        "code_license", "weights_license_status", "weights_license_evidence_url",
+        "author", "attribution", "capabilities",
+        "redistribution_authorized", "commercial_use_authorized", "distribution_mode"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "display_name": { "type": "string" },
+        "sources": { "type": "array", "items": { "type": "string" } },
+        "version": { "type": "string" },
+        "origin_url": { "type": "string", "format": "uri" },
+        "download_url": { "type": "string", "format": "uri" },
+        "relative_path": { "type": "string" },
+        "sha256": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{64}|PENDING_CI_PIN)$",
+          "description": "PENDING_CI_PIN significa que la pipeline de Windows debe calcularlo en tiempo de build descargando desde origin_url; ver .github/workflows/build-windows.yml, paso 'Pin model hashes'."
+        },
+        "expected_size_bytes": { "type": "integer", "minimum": 1 },
+        "code_license": { "type": "string" },
+        "weights_license_status": {
+          "type": "string",
+          "enum": ["confirmed_permissive", "unclear_research_only_flagged", "confirmed_restricted"]
+        },
+        "weights_license_evidence_url": { "type": "string" },
+        "author": { "type": "string" },
+        "attribution": { "type": "string" },
+        "capabilities": { "type": "array", "items": { "type": "string" } },
+        "redistribution_authorized": { "type": "boolean" },
+        "commercial_use_authorized": { "type": "boolean" },
+        "distribution_mode": { "type": "string", "enum": ["bundled", "download_on_demand"] }
+      }
+    }
+  }
+}

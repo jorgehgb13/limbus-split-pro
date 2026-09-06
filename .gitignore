@@ -1,0 +1,30 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+engine/embedded-python/
+
+# Build outputs
+artifacts/
+dist/
+*.msi
+*.wixpdb
+*.msix
+
+# Models downloaded at runtime (never commit weights)
+models/downloaded/
+*.th
+*.pt
+*.onnx
+*.safetensors
+
+# OS
+.DS_Store
+Thumbs.db
