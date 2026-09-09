@@ -2,11 +2,10 @@
 
   <!--
     Fijado deliberadamente a WiX v5.0.2 (NO v6/v7): ver docs/LICENSING.md,
-    "WiX Toolset: se fija la versión 5.x". Antes de compilar:
-
-      dotnet tool install --global wix --version 5.0.2
-      wix extension add --global WixToolset.UI.wixext/5.0.2
-      wix extension add --global WixToolset.Util.wixext/5.0.2
+    sección "WiX Toolset: se fija la versión 5.x". Los comandos exactos
+    para instalar el toolset y sus extensiones están en README.md (no se
+    repiten aquí porque usan el flag "global" con doble guion, y XML no
+    permite dos guiones seguidos dentro de un comentario).
   -->
 
   <PropertyGroup>
