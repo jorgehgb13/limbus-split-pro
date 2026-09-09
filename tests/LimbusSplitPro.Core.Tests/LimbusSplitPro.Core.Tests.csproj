@@ -5,7 +5,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <Platforms>x64</Platforms>
+    <!-- Sin <Platforms>x64</Platforms> a propósito: ver el comentario
+         equivalente en LimbusSplitPro.Core.csproj — esto es justo lo que
+         causó que `dotnet test` no encontrara el .dll (buscaba en
+         bin\Release\... pero el build con Platform=x64 lo dejaba en
+         bin\x64\Release\...). -->
   </PropertyGroup>
 
   <ItemGroup>

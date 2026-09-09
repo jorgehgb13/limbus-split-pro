@@ -6,7 +6,8 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Platforms>x64</Platforms>
+    <!-- Sin <Platforms>x64</Platforms> a propósito: ver el comentario
+         equivalente en LimbusSplitPro.Core.csproj. -->
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <RootNamespace>LimbusSplitPro.App</RootNamespace>
     <AssemblyName>LimbusSplitPro</AssemblyName>

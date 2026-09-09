@@ -35,7 +35,11 @@ jobs:
         run: dotnet restore LimbusSplitPro.sln
 
       - name: Build .NET solution (Release, x64)
-        run: dotnet build LimbusSplitPro.sln -c Release -p:Platform=x64 --no-restore
+        # Sin -p:Platform=x64: eso movía la salida a bin\x64\Release\...
+        # y rompía `dotnet test`, que por defecto busca en
+        # bin\Release\... El binario final igual queda en x64 real
+        # gracias a RuntimeIdentifiers en el publish (ver más abajo).
+        run: dotnet build LimbusSplitPro.sln -c Release --no-restore
 
       - name: Run unit tests
         run: dotnet test tests/LimbusSplitPro.Core.Tests/LimbusSplitPro.Core.Tests.csproj -c Release --no-build --logger "trx;LogFileName=test-results.trx"
@@ -83,7 +87,7 @@ jobs:
         run: |
           dotnet publish src/LimbusSplitPro.App/LimbusSplitPro.App.csproj `
             -c Release -r win-x64 --self-contained true `
-            -p:PublishSingleFile=false -p:Platform=x64 `
+            -p:PublishSingleFile=false `
             -o publish/
 
       - name: Stage embedded engine + models manifest into publish output

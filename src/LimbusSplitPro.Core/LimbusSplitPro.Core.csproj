@@ -5,7 +5,13 @@
     <UseWPF>false</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Platforms>x64</Platforms>
+    <!-- Deliberadamente SIN <Platforms>x64</Platforms>: forzar el
+         concepto de "Platform" de MSBuild a x64 mueve la carpeta de
+         salida a bin\x64\Release\... y rompe cualquier comando que
+         asuma bin\Release\... (nos pasó justo eso con `dotnet test`).
+         La arquitectura real del binario final ya queda fijada por
+         RuntimeIdentifiers en `dotnet publish -r win-x64`, así que no
+         hace falta la complejidad de "Platform" a nivel de solución. -->
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <RootNamespace>LimbusSplitPro.Core</RootNamespace>
     <AssemblyName>LimbusSplitPro.Core</AssemblyName>
