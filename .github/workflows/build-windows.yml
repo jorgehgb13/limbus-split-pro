@@ -58,6 +58,12 @@ jobs:
           # por separado (torch desde el índice CPU de PyTorch, demucs
           # desde PyPI normal).
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          # numpy no aparece como dependencia obligatoria de demucs/torch en
+          # Windows (solo está condicionada a macOS en la metadata de
+          # demucs), pero get_model() sí la necesita en tiempo de
+          # ejecución — se instala explícitamente para no depender de que
+          # llegue "de arrastre" por otra dependencia.
+          python -m pip install numpy
           python -m pip install demucs==4.1.0
           python engine/scripts/pin_model_hashes.py
 
