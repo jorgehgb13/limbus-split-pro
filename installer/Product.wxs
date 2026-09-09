@@ -10,6 +10,12 @@
         el runtime embebido.
     UpgradeCode es fijo para siempre (no cambiar entre versiones): permite
     que MajorUpgrade detecte instalaciones previas correctamente.
+
+    NOTA DE ESTRUCTURA: en el esquema simplificado de WiX v4/v5, los
+    elementos <Fragment> van al mismo nivel que <Package> (hijos de <Wix>),
+    NO dentro de <Package> — un intento anterior los anidó adentro y WiX
+    lo rechazó con WIX0005. Por eso <Package> aparece completo primero, y
+    los dos <Fragment> van después, como hermanos.
   -->
   <Package Name="Limbus Split Pro"
            Manufacturer="Limbus Split Pro"
@@ -33,49 +39,6 @@
       <Directory Id="AppProgramMenuFolder" Name="Limbus Split Pro" />
     </StandardDirectory>
 
-    <!--
-      Harvesting automático de todo lo publicado por `dotnet publish`
-      (la app WPF, sus DLLs, y engine/python + engine/limbus_engine
-      copiados como "content" del proyecto App — ver
-      LimbusSplitPro.App.csproj, ItemGroup de Content, y el paso
-      "Stage embedded engine" del workflow de CI). Con miles de archivos
-      dentro del runtime de Python embebido, listar cada uno a mano no es
-      práctico ni mantenible; WiX v4/v5 soporta glob de archivos para
-      exactamente este caso.
-    -->
-    <Fragment>
-      <ComponentGroup Id="ProductComponents" Directory="APPFOLDER">
-        <Files Include="$(PublishDir)\**" />
-      </ComponentGroup>
-    </Fragment>
-
-    <Fragment>
-      <ComponentGroup Id="ShortcutComponents" Directory="AppProgramMenuFolder">
-        <Component Id="ApplicationShortcut" Guid="2B7B0B7B-6B0E-4E7B-9B3F-000000000001">
-          <Shortcut Id="StartMenuShortcut"
-                    Name="Limbus Split Pro"
-                    Description="Separar canciones en pistas, en tu propio equipo"
-                    Target="[APPFOLDER]LimbusSplitPro.exe"
-                    WorkingDirectory="APPFOLDER" />
-          <Shortcut Id="UninstallShortcut"
-                    Name="Desinstalar Limbus Split Pro"
-                    Target="[SystemFolder]msiexec.exe"
-                    Arguments="/x [ProductCode]" />
-          <RemoveFolder Id="RemoveAppProgramMenuFolder" On="uninstall" />
-          <!-- Clave de registro por-usuario: marca de presencia para que
-               MSI sepa que este componente está instalado sin requerir
-               permisos de administrador (regla dura de instalación
-               per-user). -->
-          <RegistryValue Root="HKCU"
-                          Key="Software\Limbus Split Pro"
-                          Name="Installed"
-                          Type="integer"
-                          Value="1"
-                          KeyPath="yes" />
-        </Component>
-      </ComponentGroup>
-    </Fragment>
-
     <Feature Id="MainFeature" Title="Limbus Split Pro" Level="1">
       <ComponentGroupRef Id="ProductComponents" />
       <ComponentGroupRef Id="ShortcutComponents" />
@@ -92,4 +55,47 @@
     <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
 
   </Package>
+
+  <!--
+    Harvesting automático de todo lo publicado por `dotnet publish`
+    (la app WPF, sus DLLs, y engine/python + engine/limbus_engine
+    copiados como "content" del proyecto App — ver
+    LimbusSplitPro.App.csproj, ItemGroup de Content, y el paso
+    "Stage embedded engine" del workflow de CI). Con miles de archivos
+    dentro del runtime de Python embebido, listar cada uno a mano no es
+    práctico ni mantenible; WiX v4/v5 soporta glob de archivos para
+    exactamente este caso.
+  -->
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="APPFOLDER">
+      <Files Include="$(PublishDir)\**" />
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ShortcutComponents" Directory="AppProgramMenuFolder">
+      <Component Id="ApplicationShortcut" Guid="2B7B0B7B-6B0E-4E7B-9B3F-000000000001">
+        <Shortcut Id="StartMenuShortcut"
+                  Name="Limbus Split Pro"
+                  Description="Separar canciones en pistas, en tu propio equipo"
+                  Target="[APPFOLDER]LimbusSplitPro.exe"
+                  WorkingDirectory="APPFOLDER" />
+        <Shortcut Id="UninstallShortcut"
+                  Name="Desinstalar Limbus Split Pro"
+                  Target="[SystemFolder]msiexec.exe"
+                  Arguments="/x [ProductCode]" />
+        <RemoveFolder Id="RemoveAppProgramMenuFolder" On="uninstall" />
+        <!-- Clave de registro por-usuario: marca de presencia para que
+             MSI sepa que este componente está instalado sin requerir
+             permisos de administrador (regla dura de instalación
+             per-user). -->
+        <RegistryValue Root="HKCU"
+                        Key="Software\Limbus Split Pro"
+                        Name="Installed"
+                        Type="integer"
+                        Value="1"
+                        KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
 </Wix>
