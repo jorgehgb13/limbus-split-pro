@@ -101,11 +101,16 @@ foreach ($pattern in $pathsToRemove) {
         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-# Revertimos el ._pth a su estado seguro (site-packages deshabilitado por
-# defecto salvo lo que empaquetamos explícitamente) — PYTHONHOME y
-# PYTHONNOUSERSITE se fijan en tiempo de ejecución desde EngineClient, no
-# aquí, para no depender de variables de entorno del sistema del usuario.
-Set-Content $pthFile.FullName $originalPth
+# IMPORTANTE (bug corregido): revertir el ._pth al original de fábrica
+# deshabilita por completo la carpeta site-packages — Python dejaría de
+# encontrar demucs/torch/numpy aunque estén instalados en disco (esto
+# causó "ModuleNotFoundError: No module named 'demucs'" en la primera
+# corrida real de CI). En vez de revertir al original, se agrega
+# "Lib\site-packages" como ruta explícita, manteniendo "import site"
+# comentado (no hace falta activar el módulo `site` completo solo para
+# que nuestros propios paquetes ya instalados sean importables).
+$finalPth = $originalPth + "Lib\site-packages"
+Set-Content $pthFile.FullName $finalPth
 
 $provenance = @{
     python_version   = $PythonVersion
