@@ -70,9 +70,15 @@ jobs:
       - name: Verify no PENDING_CI_PIN values remain
         shell: pwsh
         run: |
-          $manifest = Get-Content models/manifest.json -Raw
-          if ($manifest -match "PENDING_CI_PIN") {
-            Write-Error "models/manifest.json todavía tiene valores sin pinear. Abortando build (fail-closed)."
+          # Se revisa específicamente el campo sha256 de cada modelo
+          # (parseando el JSON), no todo el texto crudo del archivo — un
+          # grep de texto plano se disparaba con la propia nota explicativa
+          # del manifiesto, que menciona "PENDING_CI_PIN" como concepto.
+          $manifest = Get-Content models/manifest.json -Raw | ConvertFrom-Json
+          $unpinned = $manifest.models | Where-Object { $_.sha256 -eq "PENDING_CI_PIN" }
+          if ($unpinned) {
+            $ids = ($unpinned | ForEach-Object { $_.id }) -join ", "
+            Write-Error "Estos modelos siguen sin hash real: $ids. Abortando build (fail-closed)."
             exit 1
           }
           Write-Host "Manifiesto de modelos verificado: sin valores pendientes."
