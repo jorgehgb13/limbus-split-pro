@@ -36,8 +36,17 @@ def sha256_of(path: Path) -> str:
 
 
 def resolve_and_pin(model_id: str, work_dir: Path) -> tuple[str, int, Path]:
-    os.environ["TORCH_HOME"] = str(work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
+
+    # IMPORTANTE: demucs 4.1.0 resuelve sus pesos pre-entrenados a través
+    # de Hugging Face Hub (huggingface_hub), NO del mecanismo antiguo de
+    # torch hub — por eso fijar solo TORCH_HOME no bastaba (los archivos
+    # terminaban en el caché por defecto de HF, fuera de nuestro control,
+    # y nuestra búsqueda no los encontraba). Se fijan ambas variables de
+    # entorno apuntando a la misma carpeta controlada.
+    os.environ["TORCH_HOME"] = str(work_dir)
+    os.environ["HF_HOME"] = str(work_dir)
+    os.environ["HUGGINGFACE_HUB_CACHE"] = str(work_dir)
 
     from demucs.pretrained import get_model  # requiere `pip install demucs` en el runner
 
@@ -45,7 +54,14 @@ def resolve_and_pin(model_id: str, work_dir: Path) -> tuple[str, int, Path]:
 
     candidates = list(work_dir.rglob("*.th")) + list(work_dir.rglob("*.safetensors"))
     if not candidates:
-        raise RuntimeError(f"No se encontró ningún archivo de pesos para '{model_id}' tras la descarga.")
+        # Diagnóstico: si esto vuelve a fallar, listar qué SÍ se descargó
+        # ayuda mucho más que solo decir "no se encontró nada".
+        everything = list(work_dir.rglob("*"))
+        listing = "\n".join(f"  - {p.relative_to(work_dir)}" for p in everything[:50]) or "  (carpeta vacía)"
+        raise RuntimeError(
+            f"No se encontró ningún archivo .th/.safetensors para '{model_id}' tras la descarga.\n"
+            f"Contenido de {work_dir}:\n{listing}"
+        )
 
     newest = max(candidates, key=lambda p: p.stat().st_mtime)
     digest = sha256_of(newest)

@@ -44,7 +44,15 @@ def ensure_model_ready(model_id: str, manifest_path: Path, cache_dir_for_torch: 
     del usuario ni una ruta fuera de nuestro control)."""
     import os
 
+    # demucs resuelve sus pesos vía Hugging Face Hub, no solo vía el
+    # mecanismo clásico de torch hub — hay que fijar ambas variables de
+    # entorno apuntando a nuestra carpeta controlada, o los pesos
+    # terminan en el caché por defecto del usuario (fuera de nuestro
+    # control) y la verificación de hash no los encuentra. Ver el mismo
+    # ajuste en engine/scripts/pin_model_hashes.py.
     os.environ["TORCH_HOME"] = str(cache_dir_for_torch)
+    os.environ["HF_HOME"] = str(cache_dir_for_torch)
+    os.environ["HUGGINGFACE_HUB_CACHE"] = str(cache_dir_for_torch)
     cache_dir_for_torch.mkdir(parents=True, exist_ok=True)
 
     from demucs.pretrained import get_model  # import perezoso: puede tardar / requerir descarga
