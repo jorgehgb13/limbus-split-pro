@@ -1,11 +1,16 @@
 {
   "schema_version": "1.0",
-  "_note_for_future_editors": "sha256 y expected_size_bytes son PENDING_CI_PIN/estimados porque este manifiesto se escribió sin acceso a un runner Windows con internet completo. El paso 'Pin model hashes' de .github/workflows/build-windows.yml DEBE calcularlos de verdad contra el archivo descargado antes de que el verificador fail-closed (ModelManifestVerifier.cs / manifest_verify.py) acepte usar el modelo. No se debe rellenar este campo a mano con un valor adivinado.",
+  "_note_for_future_editors": "sha256 y expected_size_bytes son PENDING_CI_PIN porque este manifiesto se escribió/editó sin acceso a un runner Windows con internet completo. El paso 'Pin model hashes' de .github/workflows/build-windows.yml los calcula de verdad en cada corrida (ya se confirmó exitoso para htdemucs contra la fuente oficial: repo adefossez/HTDemucs en Hugging Face Hub). htdemucs_6s se retiró de este manifiesto el 2026-09-09: la pipeline de CI no pudo resolverlo de forma confiable ni vía HF Hub ni vía el repositorio legado de AWS de Meta, y el propio demucs lo etiqueta como modelo experimental con problemas de calidad conocidos en el piano. Ver docs/MODELS.md. No se debe rellenar sha256 a mano con un valor adivinado.",
   "models": [
     {
       "id": "htdemucs",
       "display_name": "HTDemucs (4 fuentes)",
-      "sources": ["drums", "bass", "other", "vocals"],
+      "sources": [
+        "drums",
+        "bass",
+        "other",
+        "vocals"
+      ],
       "version": "955717e8",
       "origin_url": "https://github.com/facebookresearch/demucs",
       "download_url": "https://github.com/facebookresearch/demucs/blob/main/demucs/pretrained.py",
@@ -19,29 +24,12 @@
       "weights_license_evidence_url": "https://github.com/facebookresearch/demucs/issues/327",
       "author": "Alexandre Défossez et al. (Meta AI / adefossez)",
       "attribution": "HTDemucs, Hybrid Transformers for Music Source Separation, Rouard et al., ICASSP 2023.",
-      "capabilities": ["vocals", "drums", "bass", "other"],
-      "redistribution_authorized": false,
-      "commercial_use_authorized": false,
-      "distribution_mode": "download_on_demand"
-    },
-    {
-      "id": "htdemucs_6s",
-      "display_name": "HTDemucs (6 fuentes: + guitarra y piano)",
-      "sources": ["drums", "bass", "other", "vocals", "guitar", "piano"],
-      "version": "5c90dfd2",
-      "origin_url": "https://github.com/facebookresearch/demucs",
-      "download_url": "https://github.com/facebookresearch/demucs/blob/main/demucs/pretrained.py",
-      "_download_mechanism": "Resuelto dinámicamente por demucs.pretrained.get_model('htdemucs_6s'). Ver nota del modelo htdemucs arriba.",
-      "relative_path": "checkpoints/5c90dfd2.th",
-      "sha256": "PENDING_CI_PIN",
-      "expected_size_bytes": 1,
-      "_expected_size_bytes_note": "Ver nota equivalente en htdemucs.",
-      "code_license": "MIT",
-      "weights_license_status": "unclear_research_only_flagged",
-      "weights_license_evidence_url": "https://github.com/facebookresearch/demucs/issues/327",
-      "author": "Alexandre Défossez et al. (Meta AI / adefossez)",
-      "attribution": "HTDemucs 6-source variant (adds guitar and piano), Meta AI.",
-      "capabilities": ["vocals", "drums", "bass", "other", "guitar", "piano"],
+      "capabilities": [
+        "vocals",
+        "drums",
+        "bass",
+        "other"
+      ],
       "redistribution_authorized": false,
       "commercial_use_authorized": false,
       "distribution_mode": "download_on_demand"

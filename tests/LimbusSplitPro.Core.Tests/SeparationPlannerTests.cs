@@ -32,13 +32,18 @@ public class SeparationPlannerTests
     }
 
     [Fact]
-    public void SelectingGuitar_SwitchesToSixSourceModel()
+    public void GuitarAndPiano_AreMarkedUnavailable()
     {
-        var plan = SeparationPlanner.Plan(new SeparationRequest(new HashSet<StemCategory> { StemCategory.Guitarra }));
+        // htdemucs_6s se retiró de este build: no se pudo resolver de forma
+        // confiable en CI y demucs lo marca como experimental (ver
+        // docs/MODELS.md). Guitarra/Piano deben quedar deshabilitadas, no
+        // silenciosamente ocultas.
+        Assert.False(StemCategoryCatalog.Get(StemCategory.Guitarra).IsAvailable);
+        Assert.False(StemCategoryCatalog.Get(StemCategory.PianoTeclados).IsAvailable);
+        Assert.NotNull(StemCategoryCatalog.Get(StemCategory.Guitarra).UnavailableReason);
 
-        Assert.Equal("htdemucs_6s", plan.ModelId);
-        Assert.Contains("guitar", plan.NativeSourcesToKeepDirectly);
-        Assert.Contains("piano", plan.NativeSourcesToFoldIntoOther);
+        Assert.Throws<InvalidOperationException>(() =>
+            SeparationPlanner.Plan(new SeparationRequest(new HashSet<StemCategory> { StemCategory.Guitarra })));
     }
 
     [Fact]

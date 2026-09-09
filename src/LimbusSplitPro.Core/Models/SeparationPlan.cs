@@ -33,17 +33,15 @@ public static class SeparationPlanner
         [StemCategory.Bajo] = "bass",
     };
 
-    private static readonly Dictionary<StemCategory, string> Htdemucs6sMap = new(HtdemucsMap)
-    {
-        [StemCategory.Guitarra] = "guitar",
-        [StemCategory.PianoTeclados] = "piano",
-    };
-
     /// <summary>
-    /// Decide qué modelo usar (htdemucs vs htdemucs_6s) y cómo repartir las
-    /// fuentes nativas entre "pistas pedidas" y "fold into Other", siguiendo
-    /// al pie de la letra la sección 6 del prompt original: Other = todo lo
-    /// que el usuario NO pidió, nunca un archivo vacío inventado.
+    /// Decide cómo repartir las fuentes nativas de htdemucs entre "pistas
+    /// pedidas" y "fold into Other", siguiendo al pie de la letra la
+    /// sección 6 del prompt original: Other = todo lo que el usuario NO
+    /// pidió, nunca un archivo vacío inventado.
+    ///
+    /// Nota: htdemucs_6s (guitarra/piano) se evaluó y se retiró de este
+    /// build — ver docs/MODELS.md. Si algún día se repone, este método es
+    /// el lugar para reintroducir la selección de modelo por categoría.
     /// </summary>
     public static SeparationPlan Plan(SeparationRequest request)
     {
@@ -62,16 +60,10 @@ public static class SeparationPlanner
             }
         }
 
-        var needsGuitarOrPiano = requested.Contains(StemCategory.Guitarra) ||
-                                  requested.Contains(StemCategory.PianoTeclados);
+        const string modelId = "htdemucs";
+        var allNativeSources = new[] { "vocals", "drums", "bass", "other" };
 
-        var modelId = needsGuitarOrPiano ? "htdemucs_6s" : "htdemucs";
-        var map = needsGuitarOrPiano ? Htdemucs6sMap : HtdemucsMap;
-        var allNativeSources = needsGuitarOrPiano
-            ? new[] { "vocals", "drums", "bass", "guitar", "piano", "other" }
-            : new[] { "vocals", "drums", "bass", "other" };
-
-        var categoryToNativeSource = requested.ToDictionary(c => c, c => map[c]);
+        var categoryToNativeSource = requested.ToDictionary(c => c, c => HtdemucsMap[c]);
         var keepDirectly = categoryToNativeSource.Values.Distinct().ToList();
 
         // "other" nativo del propio modelo SIEMPRE se pliega en el Other

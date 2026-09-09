@@ -51,8 +51,39 @@ evidencia de que esa etiqueta se copia de forma inconsistente entre mirrors.
 
 | Modelo | Fuente | Licencia código | Licencia pesos | Salidas | Uso en la app |
 |---|---|---|---|---|---|
-| `htdemucs` | `facebookresearch/demucs` (adefossez/demucs) | MIT | Ver nota arriba — descarga bajo demanda, no redistribuida | drums, bass, other, vocals | Modelo por defecto para Voces/Batería/Bajo/Other |
-| `htdemucs_6s` | Igual repo, variante de 6 fuentes | MIT | Igual nota | drums, bass, other, vocals, guitar, piano | Se usa automáticamente solo si el usuario marca "Guitarra" o "Piano y teclados" |
+| `htdemucs` | `facebookresearch/demucs` (adefossez/demucs), vía Hugging Face Hub (`adefossez/HTDemucs`) | MIT | Ver nota arriba — descarga bajo demanda, no redistribuida | drums, bass, other, vocals | Único modelo usado en este build |
+
+## `htdemucs_6s` (guitarra/piano) — evaluado y RETIRADO el 2026-09-09
+
+Inicialmente este v1 planeaba activar Guitarra y Piano automáticamente vía
+`htdemucs_6s`. Se retiró tras comprobarlo en la pipeline de CI real
+(`.github/workflows/build-windows.yml`, paso "Pin model hashes"):
+
+- `htdemucs` se resolvió sin problema vía Hugging Face Hub
+  (`adefossez/HTDemucs`), con hash SHA-256 verificado contra la descarga real.
+- `htdemucs_6s` falló en 3 intentos consecutivos: `get_model('htdemucs_6s')`
+  no lanzó ningún error, pero tampoco dejó ningún archivo `.th`/`.safetensors`
+  en disco — ni vía Hugging Face Hub ni vía el repositorio legado de AWS de
+  Meta (`dl.fbaipublicfiles.com`) que usa como respaldo.
+- Investigando el código fuente de `demucs` (`demucs/hf.py`,
+  `demucs/pretrained.py`) y buscando en Hugging Face, no se encontró
+  evidencia de que exista un repositorio oficial `adefossez/HTDemucs-6s`
+  — solo conversiones de terceros (ONNX, CoreML, MLX) que re-exportan "la
+  misma referencia verificada", lo que sugiere que el modelo original ni
+  siquiera está publicado ahí.
+- El propio demucs marca este modelo como **experimental** en su
+  documentación, con "muchos artefactos y sangrado" (bleeding) en la pista
+  de piano.
+
+Combinando una fuente poco confiable con un modelo que el propio autor
+describe como experimental y de baja calidad, la decisión fue retirarlo de
+este v1 en vez de seguir invirtiendo tiempo en depurar su disponibilidad.
+Guitarra, Piano y teclados quedan marcadas `IsAvailable = false` en
+`StemCategoryCatalog` con esta explicación, siguiendo la misma regla que ya
+aplicaba a las demás categorías deshabilitadas (nunca ocultas
+silenciosamente). Si en el futuro se resuelve la disponibilidad del modelo
+(o aparece una alternativa con procedencia y licencia verificables), este es
+el lugar para reactivarlas.
 
 ## Categorías del documento original que quedan DESHABILITADAS en este v1
 
@@ -66,7 +97,9 @@ generes una pista vacía"):
 | Efectos vocales / reverberación / ambiente vocal (pista propia) | Mismo motivo: los modelos de-reverb comunitarios verificados con licencia clara para este uso no están confirmados. |
 | Ruido / artefactos (pista propia) | No hay un modelo de "residual de ruido" separado y verificado que no sea simplemente el resto del "other". |
 | Bombo / Caja / Toms / Platos por separado (batería detallada) | Requiere un modelo específico de separación de partes de batería; los candidatos encontrados no tienen procedencia y licencia de pesos verificables al mismo nivel que Demucs. |
-| Guitarra acústica vs. eléctrica por separado | `htdemucs_6s` da una sola pista "guitar" (no distingue acústica/eléctrica). |
+| Guitarra | `htdemucs_6s` no se pudo resolver de forma confiable en CI (ni HF Hub ni AWS legado) y está marcado como experimental por su propio autor. Ver sección arriba. |
+| Piano y teclados | Mismo motivo que Guitarra. |
+| Guitarra acústica vs. eléctrica por separado | Aplicaría solo si `htdemucs_6s` estuviera disponible, y aun así da una sola pista "guitar" combinada. |
 | Otros instrumentos individuales (más allá de guitarra/piano) | No cubiertos por los modelos htdemucs disponibles. |
 
 Estas casillas deben mostrarse **desactivadas en la UI** con un tooltip que

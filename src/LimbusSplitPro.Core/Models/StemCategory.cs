@@ -45,6 +45,13 @@ public static class StemCategoryCatalog
         "pesos verificada que separe esta categoría de forma confiable. " +
         "Ver docs/MODELS.md para el detalle de la investigación.";
 
+    private const string Htdemucs6sUnavailable =
+        "htdemucs_6s (el modelo que separaría esto) no se pudo resolver de forma confiable " +
+        "durante la compilación: no tiene un repositorio oficial en Hugging Face Hub, y el " +
+        "repositorio legado de Meta tampoco respondió. Además, el propio demucs lo marca " +
+        "como modelo experimental, con problemas de calidad conocidos en el piano. " +
+        "Ver docs/MODELS.md.";
+
     public static readonly IReadOnlyList<StemCategoryInfo> All = new List<StemCategoryInfo>
     {
         new(StemCategory.VocesTodas, "Voces", true, null, "htdemucs"),
@@ -58,12 +65,12 @@ public static class StemCategoryCatalog
         new(StemCategory.Toms, "Toms", false, NoModel, null),
         new(StemCategory.Platos, "Platos", false, NoModel, null),
         new(StemCategory.Bajo, "Bajo", true, null, "htdemucs"),
-        new(StemCategory.Guitarra, "Guitarra", true, null, "htdemucs_6s"),
+        new(StemCategory.Guitarra, "Guitarra", false, Htdemucs6sUnavailable, null),
         new(StemCategory.GuitarraAcustica, "Guitarra acústica", false,
             "htdemucs_6s solo entrega una pista de guitarra combinada; no distingue acústica de eléctrica.", null),
         new(StemCategory.GuitarraElectrica, "Guitarra eléctrica", false,
             "htdemucs_6s solo entrega una pista de guitarra combinada; no distingue acústica de eléctrica.", null),
-        new(StemCategory.PianoTeclados, "Piano y teclados", true, null, "htdemucs_6s"),
+        new(StemCategory.PianoTeclados, "Piano y teclados", false, Htdemucs6sUnavailable, null),
         new(StemCategory.Other, "Other (resto)", true, null, null),
     };
 
