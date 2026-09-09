@@ -53,6 +53,9 @@ def ensure_model_ready(model_id: str, manifest_path: Path, cache_dir_for_torch: 
     os.environ["TORCH_HOME"] = str(cache_dir_for_torch)
     os.environ["HF_HOME"] = str(cache_dir_for_torch)
     os.environ["HUGGINGFACE_HUB_CACHE"] = str(cache_dir_for_torch)
+    # Igual que en pin_model_hashes.py: el backend "Xet" puede dejar
+    # descargas a medias; se prefiere el transporte HTTP clásico.
+    os.environ["HF_HUB_DISABLE_XET"] = "1"
     cache_dir_for_torch.mkdir(parents=True, exist_ok=True)
 
     from demucs.pretrained import get_model  # import perezoso: puede tardar / requerir descarga

@@ -35,7 +35,7 @@ def sha256_of(path: Path) -> str:
     return h.hexdigest()
 
 
-def resolve_and_pin(model_id: str, work_dir: Path) -> tuple[str, int, Path]:
+def resolve_and_pin(model_id: str, work_dir: Path, attempts: int = 3) -> tuple[str, int, Path]:
     work_dir.mkdir(parents=True, exist_ok=True)
 
     # IMPORTANTE: demucs 4.1.0 resuelve sus pesos pre-entrenados a través
@@ -47,26 +47,38 @@ def resolve_and_pin(model_id: str, work_dir: Path) -> tuple[str, int, Path]:
     os.environ["TORCH_HOME"] = str(work_dir)
     os.environ["HF_HOME"] = str(work_dir)
     os.environ["HUGGINGFACE_HUB_CACHE"] = str(work_dir)
+    # El backend "Xet" (transferencia acelerada) de huggingface_hub puede
+    # dejar una descarga a medias en runners de CI (se vio como una
+    # carpeta xet/.../staging sin el archivo final). Se desactiva para
+    # usar el transporte HTTP clásico, más lento pero mucho más probado.
+    os.environ["HF_HUB_DISABLE_XET"] = "1"
 
     from demucs.pretrained import get_model  # requiere `pip install demucs` en el runner
 
-    get_model(model_id)  # esto descarga el/los archivo(s) de pesos si faltan
+    last_error: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            get_model(model_id)  # descarga el/los archivo(s) de pesos si faltan
+            candidates = list(work_dir.rglob("*.th")) + list(work_dir.rglob("*.safetensors"))
+            if candidates:
+                newest = max(candidates, key=lambda p: p.stat().st_mtime)
+                digest = sha256_of(newest)
+                size = newest.stat().st_size
+                return digest, size, newest
+            last_error = RuntimeError("get_model() no lanzó error pero no dejó ningún .th/.safetensors.")
+        except Exception as exc:  # noqa: BLE001 - queremos reintentar ante cualquier fallo de red/descarga
+            last_error = exc
 
-    candidates = list(work_dir.rglob("*.th")) + list(work_dir.rglob("*.safetensors"))
-    if not candidates:
-        # Diagnóstico: si esto vuelve a fallar, listar qué SÍ se descargó
-        # ayuda mucho más que solo decir "no se encontró nada".
-        everything = list(work_dir.rglob("*"))
-        listing = "\n".join(f"  - {p.relative_to(work_dir)}" for p in everything[:50]) or "  (carpeta vacía)"
-        raise RuntimeError(
-            f"No se encontró ningún archivo .th/.safetensors para '{model_id}' tras la descarga.\n"
-            f"Contenido de {work_dir}:\n{listing}"
-        )
+        print(f"[pin_model_hashes] Intento {attempt}/{attempts} para '{model_id}' falló: {last_error}", flush=True)
 
-    newest = max(candidates, key=lambda p: p.stat().st_mtime)
-    digest = sha256_of(newest)
-    size = newest.stat().st_size
-    return digest, size, newest
+    # Diagnóstico final: si tras varios intentos sigue sin aparecer nada,
+    # listar qué SÍ quedó en disco ayuda mucho más que solo "no se encontró".
+    everything = list(work_dir.rglob("*"))
+    listing = "\n".join(f"  - {p.relative_to(work_dir)}" for p in everything[:50]) or "  (carpeta vacía)"
+    raise RuntimeError(
+        f"No se pudo resolver '{model_id}' tras {attempts} intentos. Último error: {last_error}\n"
+        f"Contenido de {work_dir}:\n{listing}"
+    )
 
 
 def main() -> int:
