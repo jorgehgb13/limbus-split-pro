@@ -121,6 +121,25 @@ public sealed class MainViewModel : ObservableObject, IDisposable
                 .Where(c => c.Category != StemCategory.Other)
                 .Select(c => new StemCategoryOptionViewModel(c)));
 
+        // BUG CORREGIDO: CommunityToolkit.Mvvm.Input.RelayCommand, a
+        // diferencia de MvvmLight, NO se re-evalúa solo cuando cambia una
+        // propiedad — hay que avisarle explícitamente con
+        // NotifyCanExecuteChanged(). Antes de este fix, marcar una casilla
+        // de categoría nunca reactivaba el botón "Separar y exportar": se
+        // quedaba deshabilitado (gris, sin responder a clics) aunque ya se
+        // hubiera elegido archivo, carpeta y categoría, dando la impresión
+        // de que "la app no hacía nada".
+        foreach (var category in Categories)
+        {
+            category.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(StemCategoryOptionViewModel.IsSelected))
+                {
+                    StartSeparationCommand.NotifyCanExecuteChanged();
+                }
+            };
+        }
+
         PickFileCommand = new RelayCommand(PickFile);
         PickFolderCommand = new RelayCommand(PickFolder);
         SelectAllCommand = new RelayCommand(() => SetAll(true));
