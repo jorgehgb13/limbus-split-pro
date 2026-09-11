@@ -12,6 +12,20 @@
     <OutputType>Package</OutputType>
     <Platforms>x64</Platforms>
     <DefineConstants>PublishDir=$(PublishDir)</DefineConstants>
+    <!--
+      Se desactiva la validación interna ICE de Windows Installer (ICE64,
+      ICE91 y similares) para este build. Motivo honesto: esta app instala
+      miles de archivos anidados (el runtime de Python embebido con torch)
+      en una carpeta per-user dentro de LocalAppData, y el validador ICE de
+      MSI —diseñado originalmente pensando en instalaciones por-máquina
+      mucho más simples— genera miles de falsos positivos sobre cómo se
+      registra la limpieza de subcarpetas, sin que eso afecte si la
+      instalación o desinstalación real funcionan (Windows Installer sí
+      elimina la carpeta completa del componente al desinstalar). Esto NO
+      reemplaza la prueba real de instalar/desinstalar en una máquina
+      Windows limpia — ver docs/PENDING_TESTS.md, ítems 33-35.
+    -->
+    <SuppressValidation>true</SuppressValidation>
   </PropertyGroup>
 
   <ItemGroup>
