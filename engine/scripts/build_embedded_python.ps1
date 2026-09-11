@@ -85,21 +85,47 @@ if (-not (Test-Path $lockFile)) {
 }
 & "$OutputDir\python.exe" -m pip install --no-cache-dir -r $lockFile
 
-Write-Host "Limpiando pip/setuptools/compiladores/tests/ejemplos del artefacto final..."
+Write-Host "Limpiando pip/setuptools/compiladores/tests/ejemplos/cabeceras del artefacto final..."
 & "$OutputDir\python.exe" -m pip uninstall -y pip setuptools wheel 2>$null
 
-$pathsToRemove = @(
-    "Lib\site-packages\pip*",
-    "Lib\site-packages\setuptools*",
-    "Lib\site-packages\wheel*",
-    "Lib\site-packages\**\tests",
-    "Lib\site-packages\**\test",
-    "Lib\site-packages\**\*.dist-info\RECORD"
-)
-foreach ($pattern in $pathsToRemove) {
-    Get-ChildItem -Path (Join-Path $OutputDir $pattern) -Recurse -ErrorAction SilentlyContinue |
-        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+# NOTA (bug corregido): PowerShell NO soporta "**" como comodín recursivo
+# dentro de -Path (a diferencia del glob de WiX) — el intento anterior con
+# "Lib\site-packages\**\tests" no limpiaba nada en realidad. Se usa
+# Get-ChildItem -Recurse + filtro por nombre, que sí funciona.
+$sitePackages = Join-Path $OutputDir "Lib\site-packages"
+
+# Cabeceras de desarrollo C++ de torch (miles de archivos .h bajo
+# torch\include\ATen\ops\...): solo hacen falta para compilar extensiones
+# C++/CUDA propias, nunca para correr inferencia en Python. Sin quitarlas,
+# WiX intenta harvestear miles de archivos casi duplicados y el build del
+# MSI falla en cadena (WIX8602 repetido cientos de veces). Ver sección 11
+# del prompt original: "Cabeceras de desarrollo innecesarias".
+$torchInclude = Join-Path $sitePackages "torch\include"
+if (Test-Path $torchInclude) {
+    Remove-Item $torchInclude -Recurse -Force
+    Write-Host "Eliminado: $torchInclude"
 }
+
+# Librerías estáticas .lib y símbolos de depuración .pdb: solo hacen falta
+# para enlazar extensiones C++ propias contra torch, no para ejecutar los
+# .dll ya compilados (sección 11: "Archivos PDB de terceros no necesarios").
+Get-ChildItem -Path $sitePackages -Recurse -Include "*.lib", "*.pdb" -ErrorAction SilentlyContinue |
+    Remove-Item -Force -ErrorAction SilentlyContinue
+
+# Restos de pip/setuptools/wheel (ya desinstalados arriba, por si queda
+# alguna carpeta suelta de metadata).
+Get-ChildItem -Path $sitePackages -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match '^(pip|setuptools|wheel)(-|$)' } |
+    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+
+# Carpetas de tests/ejemplos empaquetadas por algunas librerías.
+Get-ChildItem -Path $sitePackages -Recurse -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -in @("tests", "test") } |
+    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+
+# Archivos RECORD de pip (metadata de instalación, no hace falta en runtime).
+Get-ChildItem -Path $sitePackages -Recurse -Filter "RECORD" -ErrorAction SilentlyContinue |
+    Remove-Item -Force -ErrorAction SilentlyContinue
 
 # IMPORTANTE (bug corregido): revertir el ._pth al original de fábrica
 # deshabilita por completo la carpeta site-packages — Python dejaría de
