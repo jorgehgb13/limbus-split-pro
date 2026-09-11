@@ -19,8 +19,13 @@
     <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="Product.wxs" />
-  </ItemGroup>
+  <!--
+    NOTA (bug corregido): el WixToolset.Sdk ya incluye automáticamente todo
+    archivo .wxs de la carpeta del proyecto como <Compile>, igual que el
+    SDK de .NET incluye *.cs automáticamente. Declarar aquí además
+    <Compile Include="Product.wxs" /> lo compilaba DOS VECES, generando
+    "WIX0089: Multiple entry sections found" (dos <Package> del mismo
+    archivo duplicado). Por eso ya no se declara explícitamente.
+  -->
 
 </Project>
